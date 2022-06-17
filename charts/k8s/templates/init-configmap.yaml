@@ -21,10 +21,10 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ $.Release.Name }}-chart-{{ .name }}-manifests
+  name: cm-{{ $.Release.Name }}-chart-{{ .chart.name }}{{ if .release }}-{{ .release.name }}{{ end }}
   labels:
     app: vcluster
-    chart: {{ .name }}-{{ .version }}
+    chart: {{ .chart.name }}-{{ .chart.version }}
     release: {{ $.Release.Name }}
     heritage: {{ $.Release.Service }}
     context: vcluster-helm-chart
@@ -32,21 +32,25 @@ data:
   {{- if .bundle }}
   bundle: {{ .bundle }}
   {{- end }}
-  name: {{ .name }}
-  repo: {{ .repo }}
-  version: {{ .version }}
-  namespace: {{ .namespace }}
+  name: {{ .chart.name }}
+  repo: {{ .chart.repo }}
+  version: {{ .chart.version }}
+  namespace: {{ .chart.namespace }}
   timeout: {{ .timeout | default "120s" | quote }}
-  {{- if .username }}
-  username: {{ .username }}
+  {{- if .chart.username }}
+  username: {{ .chart.username }}
   {{- end }}
-  {{- if .username }}
-  password: {{ .password }}
+  {{- if .chart.username }}
+  password: {{ .chart.password }}
   {{- end }}
   {{- if .values }}
   values: |-
     {{ .values | nindent 4 | trim }}
   {{- end}}
+  {{- if .release }}
+  releaseName: {{ .release.name }}
+  releaseNamespace: {{ .release.namespace }}
+  {{- end }}
 ---
 {{- end }}
 {{- end }}
