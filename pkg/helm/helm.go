@@ -1,6 +1,7 @@
 package helm
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -28,6 +29,8 @@ type UpgradeOptions struct {
 	SetValues       map[string]string
 	SetStringValues map[string]string
 
+	CreateNamespace bool
+
 	Username string
 	Password string
 
@@ -37,10 +40,13 @@ type UpgradeOptions struct {
 
 // Client defines the interface how to interact with helm
 type Client interface {
-	Install(name, namespace string, options UpgradeOptions) error
-	Upgrade(name, namespace string, options UpgradeOptions) error
+	Install(ctx context.Context, name, namespace string, options UpgradeOptions) error
+	Upgrade(ctx context.Context, name, namespace string, options UpgradeOptions) error
+	Pull(ctx context.Context, name string, options UpgradeOptions) error
 	Delete(name, namespace string) error
 	Exists(name, namespace string) (bool, error)
+	Rollback(ctx context.Context, name, namespace string) error
+	Status(ctx context.Context, name, namespace string) ([]byte, error)
 }
 
 type client struct {
@@ -58,15 +64,23 @@ func NewClient(config *clientcmdapi.Config, log log.Logger) Client {
 	}
 }
 
-func (c *client) Install(name, namespace string, options UpgradeOptions) error {
-	return c.run(name, namespace, options, "install", []string{"--repository-config=''"})
+func (c *client) Install(ctx context.Context, name, namespace string, options UpgradeOptions) error {
+	return c.run(ctx, name, namespace, options, "install", []string{"--repository-config=''"})
 }
 
-func (c *client) Upgrade(name, namespace string, options UpgradeOptions) error {
-	return c.run(name, namespace, options, "upgrade", []string{"--install", "--repository-config=''"})
+func (c *client) Upgrade(ctx context.Context, name, namespace string, options UpgradeOptions) error {
+	return c.run(ctx, name, namespace, options, "upgrade", []string{"--install", "--repository-config=''"})
 }
 
-func (c *client) run(name, namespace string, options UpgradeOptions, command string, extraArgs []string) error {
+func (c *client) Pull(ctx context.Context, name string, options UpgradeOptions) error {
+	return c.run(ctx, name, "", options, "pull", []string{})
+}
+
+func (c *client) Rollback(ctx context.Context, name, namespace string) error {
+	return c.run(ctx, name, namespace, UpgradeOptions{}, "rollback", []string{})
+}
+
+func (c *client) run(ctx context.Context, name, namespace string, options UpgradeOptions, command string, extraArgs []string) error {
 	kubeConfig, err := WriteKubeConfig(c.config)
 	if err != nil {
 		return err
@@ -92,6 +106,10 @@ func (c *client) run(name, namespace string, options UpgradeOptions, command str
 		if options.Password != "" {
 			args = append(args, "--password", options.Password)
 		}
+	}
+
+	if options.CreateNamespace {
+		args = append(args, "--create-namespace")
 	}
 
 	args = append(args, "--kubeconfig", kubeConfig, "--namespace", namespace)
@@ -168,8 +186,13 @@ func (c *client) run(name, namespace string, options UpgradeOptions, command str
 		args = append(args, "--atomic")
 	}
 
-	c.log.Debug("execute command: helm " + strings.Join(args, " "))
-	output, err := exec.Command(c.helmPath, args...).CombinedOutput()
+	c.log.Info("execute command: helm " + strings.Join(args, " "))
+	output, err := exec.CommandContext(ctx, c.helmPath, args...).CombinedOutput()
+
+	if ctx.Err() == context.DeadlineExceeded {
+		return fmt.Errorf("error executing helm %s: operation timedout", command)
+	}
+
 	if err != nil {
 		return fmt.Errorf("error executing helm %s: %s", strings.Join(args, " "), string(output))
 	}
@@ -217,6 +240,17 @@ func (c *client) Exists(name, namespace string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func (c *client) Status(ctx context.Context, name, namespace string) ([]byte, error) {
+	kubeConfig, err := WriteKubeConfig(c.config)
+	if err != nil {
+		return []byte(""), err
+	}
+	defer os.Remove(kubeConfig)
+
+	args := []string{"status", name, "--namespace", namespace, "--kubeconfig", kubeConfig}
+	return exec.CommandContext(ctx, c.helmPath, args...).CombinedOutput()
 }
 
 // WriteKubeConfig writes the kubeconfig to a file and returns the filename

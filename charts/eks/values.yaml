@@ -267,3 +267,4 @@ openshift:
 init:
   manifests: |-
     ---
+  helm: []

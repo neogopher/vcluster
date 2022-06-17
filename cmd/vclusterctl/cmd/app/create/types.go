@@ -26,3 +26,21 @@ type CreateOptions struct {
 	Isolate       bool
 	ReleaseValues string
 }
+
+type Values struct {
+	Init Init `json:"init" mapstructure:"init"`
+}
+
+type Init struct {
+	Manifests string      `json:"manifests" mapstructure:"manifests"`
+	Helm      []HelmChart `json:"helm" mapstructure:"helm"`
+}
+
+type HelmChart struct {
+	Bundle    string `mapstructure:"bundle,omitempty" json:"bundle,omitempty"`
+	Name      string `mapstructure:"name" json:"name,omitempty"`
+	Repo      string `mapstructure:"repo" json:"repo,omitempty"`
+	Version   string `mapstructure:"version" json:"version,omitempty"`
+	Namespace string `mapstructure:"namespace" json:"namespace,omitempty"`
+	Values    string `mapstructure:"values" json:"values,omitempty"`
+}
