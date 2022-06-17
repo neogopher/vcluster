@@ -51,6 +51,7 @@ FROM alpine:3.15.4
 WORKDIR /
 
 COPY --from=builder /vcluster .
+COPY --from=builder /usr/local/bin/helm /usr/local/bin/helm
 COPY manifests/ /manifests/
 
 ENTRYPOINT ["/vcluster", "start"]
