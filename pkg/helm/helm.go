@@ -245,7 +245,7 @@ func (c *client) Exists(name, namespace string) (bool, error) {
 func (c *client) Status(ctx context.Context, name, namespace string) ([]byte, error) {
 	kubeConfig, err := WriteKubeConfig(c.config)
 	if err != nil {
-		return []byte(""), err
+		return nil, err
 	}
 	defer os.Remove(kubeConfig)
 

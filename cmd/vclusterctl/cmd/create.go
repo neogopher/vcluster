@@ -226,7 +226,7 @@ func (cmd *CreateCmd) deployChart(vClusterName, chartValues string) error {
 	} else {
 		cmd.log.Infof("Create vcluster %s...", vClusterName)
 	}
-	// err = helm.NewClient(&cmd.rawConfig, cmd.log).Upgrade(vClusterName, cmd.Namespace, helm.UpgradeOptions{
+
 	// we have to upgrade / install the chart
 	ctx := context.Background()
 	err = helm.NewClient(&cmd.rawConfig, cmd.log).Upgrade(ctx, vClusterName, cmd.Namespace, helm.UpgradeOptions{

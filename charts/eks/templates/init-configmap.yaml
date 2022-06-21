@@ -32,15 +32,23 @@ data:
   {{- if .bundle }}
   bundle: {{ .bundle }}
   {{- end }}
+  {{- if .chart.name }}
   name: {{ .chart.name }}
+  {{- end }}
+  {{- if .chart.repo }}
   repo: {{ .chart.repo }}
+  {{- end }}
+  {{- if .chart.version }}
   version: {{ .chart.version }}
+  {{- end }}
+  {{- if not .release.namespace }}
   namespace: {{ .chart.namespace }}
+  {{- end }}
   timeout: {{ .timeout | default "120s" | quote }}
   {{- if .chart.username }}
   username: {{ .chart.username }}
   {{- end }}
-  {{- if .chart.username }}
+  {{- if .chart.password }}
   password: {{ .chart.password }}
   {{- end }}
   {{- if .values }}

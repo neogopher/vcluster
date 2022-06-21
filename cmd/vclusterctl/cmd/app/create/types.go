@@ -37,10 +37,16 @@ type Init struct {
 }
 
 type HelmChart struct {
-	Bundle    string `mapstructure:"bundle,omitempty" json:"bundle,omitempty"`
+	Bundle    string      `mapstructure:"bundle,omitempty" json:"bundle,omitempty"`
+	Name      string      `mapstructure:"name" json:"name,omitempty"`
+	Repo      string      `mapstructure:"repo" json:"repo,omitempty"`
+	Version   string      `mapstructure:"version" json:"version,omitempty"`
+	Namespace string      `mapstructure:"namespace" json:"namespace,omitempty"`
+	Values    string      `mapstructure:"values" json:"values,omitempty"`
+	Release   HelmRelease `mapstructure:"release" json:"release,omitempty"`
+}
+
+type HelmRelease struct {
 	Name      string `mapstructure:"name" json:"name,omitempty"`
-	Repo      string `mapstructure:"repo" json:"repo,omitempty"`
-	Version   string `mapstructure:"version" json:"version,omitempty"`
 	Namespace string `mapstructure:"namespace" json:"namespace,omitempty"`
-	Values    string `mapstructure:"values" json:"values,omitempty"`
 }

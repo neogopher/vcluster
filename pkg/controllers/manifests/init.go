@@ -2,6 +2,7 @@ package manifests
 
 import (
 	"context"
+	"crypto/md5"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -385,6 +386,9 @@ func (r *InitManifestsConfigMapReconciler) initiateInstall(ctx context.Context, 
 
 func (r *InitManifestsConfigMapReconciler) getCompressedConfig(ctx context.Context, cm *corev1.ConfigMap) (string, error) {
 	data := cm.DeepCopy().Data
+
+	bundleHash := md5.Sum([]byte(data["bundle"]))
+	data["bundleHash"] = string(bundleHash[:])
 
 	delete(data, "bundle")
 

@@ -202,7 +202,7 @@ func ExecuteStart(options *context2.VirtualClusterOptions) error {
 
 	// wait until kube config is available
 	var clientConfig clientcmd.ClientConfig
-	err = wait.Poll(time.Second, time.Hour, func() (bool, error) {
+	err = wait.PollImmediate(time.Second, time.Hour, func() (bool, error) {
 		out, err := ioutil.ReadFile(options.KubeConfigPath)
 		if err != nil {
 			if os.IsNotExist(err) {
