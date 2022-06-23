@@ -137,7 +137,7 @@ func (r *InitManifestsConfigMapReconciler) ProcessInitManifests(ctx context.Cont
 		cm.ObjectMeta.Annotations = map[string]string{}
 	}
 	cm.ObjectMeta.Annotations[LastAppliedManifestKey] = compressedManifests
-	err = r.LocalClient.Update(ctx, cm, &client.UpdateOptions{})
+	err = r.LocalClient.Update(ctx, cm)
 	if err != nil {
 		r.Log.Errorf("error updating config map with last applied annotation: %v", err)
 		return ctrl.Result{}, err
@@ -334,7 +334,7 @@ func (r *InitManifestsConfigMapReconciler) registerLastAppliedChartConfig(ctx co
 	}
 
 	cm.ObjectMeta.Annotations[LastAppliedChartConfig] = compressedConfig
-	err = r.LocalClient.Update(ctx, cm, &client.UpdateOptions{})
+	err = r.LocalClient.Update(ctx, cm)
 	if err != nil {
 		r.Log.Errorf("error updating config map with last applied chart annotation: %v", err)
 		return err
@@ -463,7 +463,7 @@ func (r *InitManifestsConfigMapReconciler) pullChartArchive(ctx context.Context,
 	}
 
 	cm.Data["bundle"] = base64.StdEncoding.EncodeToString(rawTarBall)
-	err = r.LocalClient.Update(ctx, cm, &client.UpdateOptions{})
+	err = r.LocalClient.Update(ctx, cm)
 	if err != nil {
 		r.Log.Errorf("error updating config map with pulled bundle: %v", err)
 		return err
