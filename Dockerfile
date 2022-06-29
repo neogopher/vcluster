@@ -42,6 +42,9 @@ ENV HOME /
 # Build cmd
 RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} GO111MODULE=on go build -mod vendor -o /vcluster cmd/vcluster/main.go
 
+# RUN useradd -u 12345 nonroot
+# USER nonroot
+
 ENTRYPOINT ["go", "run", "-mod", "vendor", "cmd/vcluster/main.go"]
 
 # we use alpine for easier debugging
@@ -53,5 +56,8 @@ WORKDIR /
 COPY --from=builder /vcluster .
 COPY --from=builder /usr/local/bin/helm /usr/local/bin/helm
 COPY manifests/ /manifests/
+
+# RUN useradd -u 12345 nonroot
+# USER nonroot
 
 ENTRYPOINT ["/vcluster", "start"]

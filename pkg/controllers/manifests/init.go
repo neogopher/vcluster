@@ -29,6 +29,8 @@ const (
 	LastAppliedChartConfig = "vcluster.loft.sh/last-applied-chart-config"
 
 	DefaultTimeOut = 120 * time.Second
+
+	HelmWorkDir = "/tmp"
 )
 
 type InitManifestsConfigMapReconciler struct {
@@ -54,7 +56,7 @@ func (r *InitManifestsConfigMapReconciler) Reconcile(ctx context.Context, req ct
 		}
 
 		return r.ProcessInitManifests(ctx, cm)
-	} else if strings.Contains(req.Name, "cm-"+translate.Suffix+"-chart") {
+	} else if strings.HasPrefix(req.Name, "cm-"+translate.Suffix+"-chart") {
 		cm, err := r.getConfigMap(ctx, req)
 		if err != nil {
 			return ctrl.Result{}, err
@@ -305,6 +307,7 @@ func (r *InitManifestsConfigMapReconciler) initiateUpgrade(ctx context.Context, 
 		Path:            path,
 		CreateNamespace: true,
 		Values:          values,
+		WorkDir:         HelmWorkDir,
 	})
 
 	if err != nil {
@@ -367,6 +370,7 @@ func (r *InitManifestsConfigMapReconciler) initiateInstall(ctx context.Context, 
 		Path:            path,
 		CreateNamespace: true,
 		Values:          values,
+		WorkDir:         HelmWorkDir,
 	})
 
 	if err != nil {
@@ -444,6 +448,7 @@ func (r *InitManifestsConfigMapReconciler) pullChartArchive(ctx context.Context,
 		Chart:   name,
 		Repo:    repo,
 		Version: version,
+		WorkDir: HelmWorkDir,
 	})
 
 	if err != nil {
@@ -455,7 +460,7 @@ func (r *InitManifestsConfigMapReconciler) pullChartArchive(ctx context.Context,
 
 	// update cm with chart bundle to be processed
 	// during the next reconcile
-	tarball := fmt.Sprintf("%s-%s.tgz", name, version)
+	tarball := fmt.Sprintf("/%s/%s-%s.tgz", HelmWorkDir, name, version)
 	rawTarBall, err := os.ReadFile(tarball)
 	if err != nil {
 		r.Log.Errorf("error reading in pulled archive: %v", err)
@@ -483,10 +488,9 @@ func (r *InitManifestsConfigMapReconciler) bundleToChart(ctx context.Context, cm
 	}
 
 	name, _ := r.getChartOrReleaseDetails(ctx, cm)
-	// version, _ := cm.Data["version"]
 
-	// path, err := tarutil.ExtractTarGz(chartName, bytes.NewReader(tarball))
-	f, err := os.Create(name + ".tar.gz")
+	filePath := fmt.Sprintf("%s/%s.tar.gz", HelmWorkDir, name)
+	f, err := os.Create(filePath)
 	if err != nil {
 		r.Log.Errorf("unable to create tar file for helm: %v", err)
 		return "", err
@@ -498,9 +502,9 @@ func (r *InitManifestsConfigMapReconciler) bundleToChart(ctx context.Context, cm
 		r.Log.Errorf("unable to write to tar file on disk: %v", err)
 		return "", err
 	}
-	r.Log.Infof("extracted to path: %s", name+".tar.gz")
+	r.Log.Infof("extracted to path: %s", filePath)
 
-	return name + ".tar.gz", err
+	return filePath, err
 }
 
 func (r *InitManifestsConfigMapReconciler) parseTimeout(ctx context.Context, cm *corev1.ConfigMap) time.Duration {

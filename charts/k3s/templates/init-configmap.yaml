@@ -32,17 +32,14 @@ data:
   {{- if .bundle }}
   bundle: {{ .bundle }}
   {{- end }}
-  {{- if .chart.name }}
+  {{- if .chart }}
   name: {{ .chart.name }}
   {{- end }}
-  {{- if .chart.repo }}
+  {{- if .chart }}
   repo: {{ .chart.repo }}
   {{- end }}
-  {{- if .chart.version }}
+  {{- if .chart }}
   version: {{ .chart.version }}
-  {{- end }}
-  {{- if not .release.namespace }}
-  namespace: {{ .chart.namespace }}
   {{- end }}
   timeout: {{ .timeout | default "120s" | quote }}
   {{- if .chart.username }}

@@ -33,6 +33,7 @@ type UpgradeOptions struct {
 
 	Username string
 	Password string
+	WorkDir  string
 
 	Atomic bool
 	Force  bool
@@ -186,8 +187,14 @@ func (c *client) run(ctx context.Context, name, namespace string, options Upgrad
 		args = append(args, "--atomic")
 	}
 
+	cmd := exec.CommandContext(ctx, c.helmPath, args...)
+
+	if options.WorkDir != "" {
+		cmd.Dir = options.WorkDir
+	}
+
 	c.log.Info("execute command: helm " + strings.Join(args, " "))
-	output, err := exec.CommandContext(ctx, c.helmPath, args...).CombinedOutput()
+	output, err := cmd.CombinedOutput()
 
 	if ctx.Err() == context.DeadlineExceeded {
 		return fmt.Errorf("error executing helm %s: operation timedout", command)
